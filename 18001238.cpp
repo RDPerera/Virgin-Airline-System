@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <conio.h>
-
+#include <map>
 using namespace std;
 
 class cliHandler
@@ -40,55 +41,66 @@ class cliHandler
 class flight
 {
     private:
-        struct seatDetails
-        {
-            int rowNumber;
-            char Class;
-            int seatCount;
-            char * availableSeats;
-        };
-
+        
         struct flightDetails
         {
-            char flightNumber [5];
-            char dateTime [16];
-            char departureAirport [20];
-            char arrivalAirport [20];
+            char flightNumber[6];
+            char dateTime[16];
+            char departureAirport[20];
+            char arrivalAirport[20];
             int rowCount;
-            vector <struct seatDetails> rows;
+    		char seats[6][60];
         };
         
 		vector <struct flightDetails> flights;
-
+		void split(char str[]) 
+		{ 
+		    char *token = strtok(str, " ")
+			int count=0;
+			map <char,int> classifiedSeats;
+			char ch;
+			int num;
+		    while (token != NULL) 
+		    { 
+		        
+				count++; 
+				if (count==2)
+				{
+					classifiedSeats.find(token)
+				}
+		        token = strtok(NULL, " "); 
+		    } 
+		} 
         void readFile()
         {
             string temp;
             int state=0;
-            struct flightDetails node;
+            struct flightDetails tempFlight;
             ifstream MyReadFile("Flights.txt");
-            while (getline (MyReadFile, temp))
+            while (getline (MyReadFile, tempStr))
             {
             	cout << temp << state << endl;
             	if(state==0)
             	{
-            		node.flightNumber=temp;
-            		node.rowCount=0;
+            		tempFlight.flightNumber=tempStr;
+            		tempFlight.rowCount=0;
 				}
 				else if(state==1)
 				{
-					node.dateTime=temp;
+					tempFlight.dateTime=tempStr;
 				}
 				else if(state==2)
 				{
-					node.departureAirport=temp;
+					tempFlight.departureAirport=tempStr;
 				}
 				else if(state==3)
 				{
-					node.arrivalAirport=temp;
+					tempFlight.arrivalAirport=tempStr;
 				}
 				else if(state>3 && temp!="")
 				{
-					node.rowCount ++ ;
+					tempFlight.rows.push_back(tempStr)
+					tempFlight.rowCount ++ ;
 				}
             	state ++ ;
             	if(temp == "")
