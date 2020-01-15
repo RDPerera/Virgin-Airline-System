@@ -38,20 +38,6 @@ class cli
             system("cls");
         }
 };
-
-class sys
-{
-	private:
-		int n;
-		
-		
-	public:
-		void print()
-		{
-			cout << "Hello world !";	
-		}
-		
-};
 class flight
 {
 	private:
@@ -74,6 +60,7 @@ class flight
         	int count;
 		};
 		struct seatCount * freeSeats;
+		
 	public:
 
 		/* functionality methods */
@@ -136,28 +123,123 @@ class flight
 		}				
 };
 
+class sys
+{
+	private:
+		int n;
+		flight * flights;
+			
+	public:
+		sys(char file[]="Flights.txt")
+		{
+			n=countFlight(file);
+			init(file);
+		}
+		int countFlight(char file[])
+		{
+			int count=0;
+			string temp;
+			ifstream database(file);
+            while (getline (database, temp))
+            {
+            	if(temp == "")
+            	{
+            		count++;
+				}	
+        	}
+        	database.close();
+        	return count;
+		}
+		void init(char file[])
+		{
+			flights = new flight[n];
+			
+			string tempStr;
+			char * temp;
+			
+            int state=0;
+            int flightNum=0;
+            
+            ifstream database(file);
+            while (getline (database,tempStr))
+            {
+            	
+            	temp=new char[tempStr.size()+1];
+            	strcpy(temp,tempStr.c_str());
+            	//cout << temp << endl;
+            	if(state==0)
+            	{
+            		flights[flightNum].setNumber(temp);
+				}
+				else if(state==1)
+				{
+					flights[flightNum].setDateTime(temp);
+				}
+				else if(state==2)
+				{
+					flights[flightNum].setDeparture(temp);
+				}
+				else if(state==3)
+				{
+					flights[flightNum].setArrival(temp);
+				}
+				else if(state>3 && temp!="")
+				{
+					flights[flightNum].setSeats(temp);
+					cout << endl;
+				}
+            	state ++ ;
+            	if(tempStr == "")
+            	{
+            		state=0;
+            		flightNum++;
+				}
+            	
+			}
+			return;
+		}
+		void printFlights()
+		{
+			flight tmp;
+			for (int i=0;i<n;i++)
+			{
+				tmp=flights[i];
+				cout << tmp.getNumber() 	<< endl;
+				cout << tmp.getArrival() 	<< endl;
+				cout << tmp.getDateTime()	<< endl;
+				cout << tmp.getArrival() 	<< endl << endl;
+			}
+			
+		}
+		
+};
+
 int main()
 {
 	cli display;
-	sys System;
+	
 	
 	int chose = display.mainMenu();
 	switch (chose)
 	{
 		case 1:
 			display.clear();
-			System.print();
 			break;
 		case 2:
-			flight tmp;
+			/*
 			tmp.setNumber("VA301");
 			tmp.setDateTime("20/02/2020 10:20");
 			tmp.setArrival("COLOMBO");
 			tmp.setDeparture("PAN");
-			cout << tmp.getNumber() << endl;
-			cout << tmp.getArrival() << endl;
-			cout << tmp.getDateTime() << endl;
-			cout << tmp.getArrival() << endl;
+			cout << tmp.getNumber() 	<< endl;
+			cout << tmp.getArrival() 	<< endl;
+			cout << tmp.getDateTime()	<< endl;
+			cout << tmp.getArrival() 	<< endl;*/
+			break;
+		case 3:
+			sys System;
+			System.printFlights();
+			break;
 	}
 	return 0;
 }
