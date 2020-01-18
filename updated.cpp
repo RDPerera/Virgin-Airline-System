@@ -1,72 +1,90 @@
 #include <iostream>
 #include <fstream>
 #include <conio.h>
-#include <string.h> 
-
+#include <stdlib.h>
+#include <string.h>
+#include <iomanip>
 using namespace std;
 
-class cli
+struct seatCount
 {
-    private :
-        int chose;
-    public:
-        int mainMenu()
-        {
-            cout << "Welcome To Virgin Airline  " << endl ;
-            cout << "=========================  " << endl ;
-            cout << "1 Display available flights" << endl ;
-            cout << "2 View flight              " << endl ;
-            cout << "3 Seat availability        " << endl ;
-            cout << "4 Seat booking             " << endl ;
-            cout << "5 Exit                     " << endl ;
-            cout << "=========================  " << endl ;
-            cout << "Enter Your Choise >>> ";
-            cin  >> chose;
-            while(chose >5 || chose <1)
-            {
-                
-                cout << "=========================  " << endl ;
-                cout << chose << " is Invalid Input " << endl ;
-                cout << "=========================  " << endl ;
-                cout << "Enter Your Choise Again >>> ";
-                cin  >> chose;
-            }
-            return chose;
-        }
-        void clear()
-        {
-            system("cls");
-        }
+    char seatClass;
+    int count;
+    struct seatCount * nextClass;
 };
+struct seat
+{
+    int rowNumber;
+    char seatClass;
+    char * freeSeats;
+    struct seat * next;
+};
+
+
 class flight
 {
 	private:
-		struct seat
-        {
-        	int rowNumber;
-        	char seatClass;
-        	char * seats;
-        	struct seat * next;
-		};
+		
 		char flightNumber[6];
 		char departureAirport[20];
         char dateTime[17];
         char arrivalAirport[20]; 
         struct seat * seats;
         
-    	struct seatCount
-        {
-        	char seatClass;
-        	int count;
-		};
-		struct seatCount * freeSeats;
+    	
+		struct seatCount * freeSeatCount;
 		
 	public:
-
+		flight()
+		{
+			seats=NULL;
+			freeSeatCount=NULL;
+		}
 		/* functionality methods */
 		struct seatCount * getFreeSeats()
 		{
-			return freeSeats;
+			
+			struct seat * tmpSeat=seats;
+			struct seatCount * tmpCount = freeSeatCount;
+			if(tmpSeat!=NULL)
+			{
+				
+				while(tmpSeat->next!=NULL)
+				{
+					if(freeSeatCount==NULL)
+					{
+						freeSeatCount = new struct seatCount;
+						freeSeatCount -> seatClass = tmpSeat -> seatClass;
+						freeSeatCount -> count = strlen(tmpSeat -> freeSeats);
+					}
+					else
+					{
+						int flag=0;
+						tmpCount = freeSeatCount;
+						while(tmpCount !=NULL)
+						{
+							if(tmpSeat->seatClass == tmpCount->seatClass)
+							{
+								flag=1;
+								(tmpCount->count)+=strlen(tmpSeat -> freeSeats);
+							}
+							tmpCount=tmpCount->nextClass;
+						}
+						if(flag==0)
+						{
+							struct seatCount * newNode = new struct seatCount;
+							newNode -> seatClass = tmpSeat -> seatClass;
+							newNode -> count = strlen(tmpSeat -> freeSeats);
+							tmpCount = freeSeatCount;
+							while (tmpCount->nextClass!=NULL)
+								tmpCount=tmpCount->nextClass;
+							tmpCount->nextClass = newNode;
+						}
+					}
+					tmpSeat=tmpSeat->next;
+				}
+			}
+			return freeSeatCount;
 		}
 		
 		/* setter		methods */
@@ -92,11 +110,44 @@ class flight
 		
 		void setSeats(char * rule)
 		{
+			
 			char *ptr = strtok(rule," ");
+			int partNumber=1;
+			struct seat * tmp = new struct seat;
+			tmp -> next = NULL;
 			while (ptr != NULL)
 			{
-				cout << ptr << " ";
+				
+				if(partNumber==1)
+				{
+					tmp -> rowNumber = atoi(ptr);
+				}
+				else if (partNumber==2)
+				{
+					strcpy(&(tmp -> seatClass),ptr);
+				}
+				else
+				{
+					int len=strlen(ptr);
+					tmp -> freeSeats = new char[len];
+					strcpy(tmp -> freeSeats,ptr);
+					partNumber=0;
+				}
 				ptr = strtok(NULL," ");
+				partNumber++;
+			}
+			struct seat * trvsTmp = seats;
+			if(trvsTmp==NULL)
+			{
+				seats = tmp;
+			}
+			else
+			{
+				while(trvsTmp->next != NULL)
+				{
+					trvsTmp = trvsTmp -> next;
+				}
+				trvsTmp -> next = tmp;
 			}
 		}
 	
@@ -128,13 +179,47 @@ class sys
 	private:
 		int n;
 		flight * flights;
+		int chose;
 			
 	public:
+		
 		sys(char file[]="Flights.txt")
 		{
 			n=countFlight(file);
 			init(file);
 		}
+		
+		int mainMenu()
+        {
+            cout << "Welcome To Virgin Airline  " << endl ;
+            cout << "=========================  " << endl ;
+            cout << "1 Display available flights" << endl ;
+            cout << "2 View flight              " << endl ;
+            cout << "3 Seat availability        " << endl ;
+            cout << "4 Seat booking             " << endl ;
+            cout << "5 Exit                     " << endl ;
+            cout << "=========================  " << endl ;
+            cout << "Enter Your Choise >>> ";
+            cin  >> chose;
+            while(chose >5 || chose <1)
+            {
+                
+                cout << "=========================  " << endl ;
+                cout << chose << " is Invalid Input " << endl ;
+                cout << "=========================  " << endl ;
+                cout << "Enter Your Choise Again >>> ";
+                cin  >> chose;
+            }
+            return chose;
+        }
+        
+        
+        void clear()
+        {
+            system("cls");
+        }
+        
+        
 		int countFlight(char file[])
 		{
 			int count=0;
@@ -144,12 +229,14 @@ class sys
             {
             	if(temp == "")
             	{
-            		count++;
+            		count ++ ;
 				}	
         	}
         	database.close();
         	return count;
 		}
+		
+		
 		void init(char file[])
 		{
 			flights = new flight[n];
@@ -186,7 +273,6 @@ class sys
 				else if(state>3 && temp!="")
 				{
 					flights[flightNum].setSeats(temp);
-					cout << endl;
 				}
             	state ++ ;
             	if(tempStr == "")
@@ -198,47 +284,62 @@ class sys
 			}
 			return;
 		}
-		void printFlights()
+		
+		
+		void option1()
 		{
 			flight tmp;
+			line();
+			cout << "|\t Flight Number\t |\t Departure Date And Time |\t Departure Airport Code\t |\t Arrival Airport Codet\t|\tNumber Of Seats Free\t|" << endl;
+			line();
+			struct seatCount * ptr;
 			for (int i=0;i<n;i++)
 			{
 				tmp=flights[i];
-				cout << tmp.getNumber() 	<< endl;
-				cout << tmp.getArrival() 	<< endl;
-				cout << tmp.getDateTime()	<< endl;
-				cout << tmp.getArrival() 	<< endl << endl;
+				ptr=tmp.getFreeSeats();
+				if(ptr!=NULL)
+				{
+					
+					cout << "|\t\t " << tmp.getNumber() <<"\t |\t "<< tmp.getDateTime() << "\t |\t " <<  tmp.getDeparture();
+					cout <<	"\t \t |\t " << tmp.getArrival() << "\t\t|\t Class :" ;
+					while(ptr!=NULL)
+					{
+						cout << "  " << ptr->seatClass << ":" << ptr->count;
+						ptr=ptr->nextClass;
+					}
+					cout << "\t"<< "|" << endl;
+					line();
+					
+				}	
 			}
 			
 		}
-		
+		void line()
+		{
+			
+			for(int i=0;i<145;i++)
+					cout << "-";
+			cout<< endl;
+		}	
+	
 };
 
 int main()
 {
-	cli display;
+	sys system;
 	
 	
-	int chose = display.mainMenu();
+	int chose = system.mainMenu();
 	switch (chose)
 	{
 		case 1:
-			display.clear();
+			system.clear();
 			break;
 		case 2:
-			/*
-			tmp.setNumber("VA301");
-			tmp.setDateTime("20/02/2020 10:20");
-			tmp.setArrival("COLOMBO");
-			tmp.setDeparture("PAN");
-			cout << tmp.getNumber() 	<< endl;
-			cout << tmp.getArrival() 	<< endl;
-			cout << tmp.getDateTime()	<< endl;
-			cout << tmp.getArrival() 	<< endl;*/
 			break;
 		case 3:
-			sys System;
-			System.printFlights();
+			system.clear();
+			system.option1();
 			break;
 	}
 	return 0;
