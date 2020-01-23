@@ -6,6 +6,14 @@
 #include <iomanip>
 #include <ctime>
 
+/*******************************************************************************
+	> flight class for store the all information about ONE flight
+	> Using object array we stored all flight details
+	> In flight class there are two linked list, one for store the seat details
+    other one for store the number of free seats  with their class
+	> sys class for all operations that related with flights
+ALL Linked Lists and Objects Arrays Are Dynamically Allocated According to File!
+*******************************************************************************/
 
 using namespace std;
 
@@ -44,6 +52,8 @@ class flight
 			freeSeatCount=NULL;
 		}
 		/* functionality methods */
+		
+		//return number of freeseat with their class in the filght
 		struct seatCount * getFreeSeats()
 		{
 			
@@ -59,6 +69,7 @@ class flight
 						freeSeatCount = new struct seatCount;
 						freeSeatCount -> seatClass = tmpSeat -> seatClass;
 						freeSeatCount -> count = strlen(tmpSeat -> freeSeats);
+						freeSeatCount -> nextClass=NULL;
 					}
 					else
 					{
@@ -78,6 +89,7 @@ class flight
 							struct seatCount * newNode = new struct seatCount;
 							newNode -> seatClass = tmpSeat -> seatClass;
 							newNode -> count = strlen(tmpSeat -> freeSeats);
+							newNode ->nextClass = NULL;
 							tmpCount = freeSeatCount;
 							while (tmpCount->nextClass!=NULL)
 								tmpCount=tmpCount->nextClass;
@@ -110,7 +122,7 @@ class flight
 		{
 			strcpy(arrivalAirport,arriAirport);
 		}
-		
+		//create seat list
 		void setSeats(char * rule)
 		{
 			
@@ -184,30 +196,26 @@ class flight
 class sys
 {
 	private:
-		int n,Gflag=0;
+		int n,Gflag;
 		flight * flights;
 		int chose;
 			
 	public:
 		
-		sys(char file[]="Flights.txt")
+		sys()
 		{
-			n=countFlight(file);
-			init(file);
+			Gflag=0;
+			n=countFlight();
+			init();
 		}
-		~sys()
-		{
-			//clear();
-			//option5();
-		}
+
 		int mainMenu()
         {
-            menu();
+            menu();//for dislapy the UI 
             cout << "\tEnter Your Choise >>> ";
             cin  >> chose;
             while(!(chose <=5 && chose >=1))
             {
-                
                 clear();
                 menu();
             	cout << "\tInvalid Input ! Enter Your Choise Again >>> ";
@@ -216,18 +224,18 @@ class sys
             return chose;
         }
         
-        
+        // clear the screen (only working for windows)
         void clear()
         {
             system("cls");
         }
         
-        
-		int countFlight(char file[])
+        //count the numer of Flights in the file
+		int countFlight() 
 		{
 			int count=0;
 			string temp;
-			ifstream database(file);
+			ifstream database("Flights.txt");
             while (getline (database, temp))
             {
             	if(temp == "")
@@ -239,10 +247,11 @@ class sys
         	return count;
 		}
 		
-		
-		void init(char file[])
+		//reading file and create flight object array in main memory
+		void init()
 		{
-			loardLogo();
+			loardLogo();//lording logo
+			
 			flights = new flight[n];
 			
 			string tempStr;
@@ -251,7 +260,7 @@ class sys
             int state=0;
             int flightNum=0;
             
-            ifstream database(file);
+            ifstream database("Flights.txt");
             while (getline (database,tempStr))
             {
             	
@@ -330,7 +339,7 @@ class sys
 			cin >> num ;
 			clear();
 			int flag=0,i;
-			for (i=0;i<n;i++)
+			for (i=0;i<n;i++)//find the flight
 			{
 				tmp=flights[i];
 				char * number=tmp.getNumber();
@@ -404,7 +413,7 @@ class sys
 			cin >> num ;
 			clear();
 			int flag=0,i;
-			for (i=0;i<n;i++)
+			for (i=0;i<n;i++)//find the flight
 			{
 				tmp=flights[i];
 				char * number=tmp.getNumber();
@@ -430,6 +439,7 @@ class sys
 				{
 					count=count+ptr->count;
 					ptr=ptr->nextClass;
+					
 				}
 				if(count>=numSeats)
 				{
@@ -441,13 +451,6 @@ class sys
 					cout << "\t\t| Flight Date Time\t : "<<tmp.getDateTime()<<"\t|"<<endl;
 					cout << "\t\t| Arrival Airport Code\t : "<<tmp.getArrival()<<"\t\t|"<<endl;
 					cout << "\t\t| Departure Airport Code : "<<tmp.getDeparture()<<"\t\t|"<<endl;
-					cout << "\t\t| Number Of Seats Free\t : ";
-					while(ptr!=NULL)
-						{
-							cout << "  " << ptr->seatClass << ":" << ptr->count;
-							ptr=ptr->nextClass;
-						}
-					cout <<"\t\t|"<<endl;
 					cout << "\t\t|                                               |"<<endl;
 					cout << "\t\t|\tROW\tCLASS\t\tSEATS\t\t|"<<endl;
 					cout << "\t\t|                                               |"<<endl;
@@ -493,14 +496,14 @@ class sys
 			flight tmp=option2();
 			if(Gflag)
 			{
-				struct seat * prvSeat;
 				struct seat * tmpSeat=tmp.getSeats();
-				cout <<endl<< "\t\t For Book A Seat  Enter Row Number (1-60 ):";
+				struct seat * prvSeat=tmpSeat;
+				cout <<endl<< "\t\tFor Book A Seat  Enter Row Number (1-60 ):";
 				cin >> rownum;
 				cout << "\t\tEnter Seat Position (A-F) :";
 				cin >> seat;
 				char * pch;
-				int innerFlag=0;
+				int innerFlag=0,innerFlag2=0;
 				if(tmpSeat!=NULL)
 				{
 					while(tmpSeat->next!=NULL)
@@ -508,25 +511,34 @@ class sys
 						if(tmpSeat->rowNumber==rownum)
 						{
 							innerFlag=1;
-							pch=strchr(tmpSeat->freeSeats,seat);
-							if(pch==NULL)
+							char * list=tmpSeat->freeSeats;
+							len=strlen(list);
+							for (index=0;index<len;index++)
+								if(list[index]==seat)
+								{
+									innerFlag2=1;
+									break;
+								}
+							if(!innerFlag2)
 							{
-								cout << endl << "\t\tValid Row But Invalid Seat !! ";
+								cout << endl << "\t\tValid Row But Invalid Seat !! "<<endl;
 							}
 						  	else
 							{
-								len=strlen(tmpSeat->freeSeats);
 								if(len==1)
 								{
-									prvSeat=tmpSeat->next;
-									cout << endl <<"\t\t Your Seat BOOKED !!";
+									if(prvSeat==tmpSeat)
+										*prvSeat=*tmpSeat->next;
+									else
+										prvSeat->next=tmpSeat->next;
+									cout << endl <<"\t\tYour Seat BOOKED !!"<<endl;
 								}
 								else
 								{
-									index=pch-tmpSeat->freeSeats+1;
-									for (int i = index; i < len - 1; ++i)
+									for (int i = index; i < len -1 ; i++)
 									    tmpSeat->freeSeats[i] = tmpSeat->freeSeats[i + 1];
-									cout << endl <<"\t\t Your Seat BOOKED !!";	
+									tmpSeat->freeSeats[strlen(tmpSeat->freeSeats)-1]='\0';
+									cout << endl <<"\t\tYour Seat BOOKED !!"<<endl;	
 								}
 						  		
 							}
@@ -536,7 +548,7 @@ class sys
 						tmpSeat=tmpSeat->next;
 					}
 					if (innerFlag==0)
-						cout << endl << "\t\tInvalid Row Number !! ";
+						cout << endl << "\t\tInvalid Row Number !! "<<endl;
 				}
 				else 
 				{
@@ -552,7 +564,7 @@ class sys
 		{
 			exitLogo();
 			ofstream file;
-			file.open ("Flight.txt");
+			file.open ("Flights.txt");
 			flight tmp;
 			struct seat * ptr;
 			for (int i=0;i<n;i++)
@@ -642,7 +654,8 @@ class sys
 			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
-			cout<< "\t|                                      Virgin Airline                                                |" << endl;
+			cout<< "\t|                                                                                                    |" << endl;
+			cout<< "\t|                                       Virgin Airline                                               |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t|                            <<<<<<<<<< System Starting >>>>>>>>                                     |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
@@ -655,8 +668,11 @@ class sys
 			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t|                                                                                                    |" << endl;
+			cout<< "\t|                                                                                                    |" << endl;
 			cout<< "\t------------------------------------------------------------------------------------------------------" << endl;
 		}
+		//for loading time                                           / in implementation we not need this //
+		//because in this prototype database loaading time is very short so we can't see the loading screen
 		void sleep(float s){
 		    clock_t sc = clock();
 		    float sa = s * CLOCKS_PER_SEC;
@@ -702,7 +718,10 @@ int main()
 				exit(0);
 				break;
 		}
-		cout << "\tEnter Any Number To Return MainMenu : ";
+		if(chose == 1)
+			cout << "\tEnter Any Number To Return MainMenu : ";
+		else
+			cout << "\t\tEnter Any Number To Return MainMenu : ";
 		cin >> x;
 	}
 	return 0;
